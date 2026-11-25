@@ -1,6 +1,9 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>Power of Fear X-Ray</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Power of Feelings X-Rays</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Figtree:wght@400;500;600&display=swap">
@@ -34,6 +37,7 @@
 }
 
 * { box-sizing: border-box; }
+body { margin: 0; }
 body {
   background: var(--bg);
   color: var(--ink);
@@ -200,119 +204,29 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
 @media (prefers-reduced-motion: reduce) {
   .bigbar .now, .bigbar .pot, .xray .bar span, .scale label { transition: none; }
 }
-</style>
 
+.cards { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.cards a {
+  display: grid; gap: 4px; text-decoration: none; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 20px 18px; transition: border-color .12s;
+}
+.cards a:hover { border-color: var(--accent); }
+.cards a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cards strong { font-family: var(--display); font-weight: 500; font-size: 1.5rem; line-height: 1.2; }
+.cards span { color: var(--muted); font-size: 0.95rem; }
+</style>
+</head>
+<body>
 <main class="wrap">
   <header>
-    <h1>The Power of Fear</h1>
-    <p class="intro">Rate each statement from 0 to 10. 0 means the statement does not apply to you; 10 means it applies fully.</p>
+    <h1>The Power of Feelings</h1>
+    <p class="intro">Choose a feeling. You rate a set of statements from 0 to 10 and see your score and your potential.</p>
   </header>
-
-  <section aria-labelledby="q-heading">
-    <h2 id="q-heading" hidden>Statements</h2>
-    <div class="scale-key" aria-hidden="true"><span>0 · does not apply</span><span>10 · applies fully</span></div>
-    <ol class="items" id="items" style="margin-top:12px"></ol>
-  </section>
-
-  <section class="result" aria-live="polite">
-    <div class="score-row">
-      <div class="score-label">Your power of fear</div>
-      <div class="progress" id="progress">0 of 9 answered</div>
-    </div>
-    <div class="bigbar" role="img" id="bigbar" aria-label="No answers yet">
-      <div class="now" id="now"><span class="tag">Score</span><strong id="nowVal">0</strong></div>
-      <div class="pot" id="pot"><span class="tag">Potential</span><strong id="potVal">+10</strong></div>
-    </div>
-    <div class="legend">
-      <span><i class="k-now"></i>Your score</span>
-      <span><i class="k-pot"></i>Your potential: the room still open to 10</span>
-    </div>
-    <ul class="xray" id="xray"></ul>
-    <div class="actions"><button class="reset" id="reset" type="button">Start over</button></div>
-  </section>
+  <ul class="cards">
+    <li><a href="fear/"><strong>The Power of Fear</strong><span>9 statements</span></a></li>
+    <li><a href="shame/"><strong>The Power of Shame</strong><span>7 statements</span></a></li>
+  </ul>
 </main>
-
-<script>
-const STATEMENTS = [
-  { short: "Creativity",              text: "I am creative." },
-  { short: "Surrender",               text: "I surrender to the unknown so the new can arise." },
-  { short: "Purpose",                 text: "I have found my purpose in life." },
-  { short: "Living deeply",           text: "I live deeply." },
-  { short: "Unconditional love",      text: "I love unconditionally." },
-  { short: "Adventure",               text: "I experience adventure." },
-  { short: "Mystery",                 text: "I embrace the unknown and open myself to mystery." },
-  { short: "Transcending limitations",text: "I transcend my limitations." },
-  { short: "Evolving",                text: "I evolve." }
-];
-
-const answers = new Array(STATEMENTS.length).fill(null);
-const itemsEl = document.getElementById("items");
-const xrayEl = document.getElementById("xray");
-
-STATEMENTS.forEach((s, i) => {
-  const li = document.createElement("li");
-  li.className = "item";
-  const qid = "q" + (i + 1);
-  let scale = `<fieldset class="scale" aria-labelledby="${qid}-text">`;
-  for (let v = 0; v <= 10; v++) {
-    scale += `<input type="radio" name="${qid}" id="${qid}-${v}" value="${v}"><label for="${qid}-${v}">${v}</label>`;
-  }
-  scale += `</fieldset>`;
-  li.innerHTML = `<p id="${qid}-text">${s.text}</p>${scale}`;
-  itemsEl.appendChild(li);
-
-  const x = document.createElement("li");
-  x.className = "empty";
-  x.innerHTML = `<span class="name">${s.short}</span><span class="val">–</span><span class="bar"><span></span></span>`;
-  xrayEl.appendChild(x);
-});
-
-itemsEl.addEventListener("change", e => {
-  if (e.target.type !== "radio") return;
-  const i = Number(e.target.name.slice(1)) - 1;
-  answers[i] = Number(e.target.value);
-  render();
-});
-
-document.getElementById("reset").addEventListener("click", () => {
-  answers.fill(null);
-  itemsEl.querySelectorAll("input").forEach(r => { r.checked = false; });
-  render();
-  window.scrollTo({ top: 0, behavior: "smooth" });
-});
-
-function render() {
-  const given = answers.filter(v => v !== null);
-  const avg = given.length ? given.reduce((a, b) => a + b, 0) / given.length : null;
-  const complete = given.length === STATEMENTS.length;
-
-  document.getElementById("progress").textContent =
-    complete ? "All 9 answered" : `${given.length} of 9 answered`;
-  const score = avg === null ? 0 : avg;
-  const pot = 10 - score;
-  const nowEl = document.getElementById("now");
-  const potEl = document.getElementById("pot");
-  nowEl.style.flexBasis = (score * 10) + "%";
-  document.getElementById("nowVal").textContent = avg === null ? "0" : score.toFixed(1);
-  document.getElementById("potVal").textContent = "+" + (Number.isInteger(pot) ? pot : pot.toFixed(1));
-  nowEl.classList.toggle("hide", score < 1);
-  nowEl.classList.toggle("tight", score < 3.5);
-  potEl.classList.toggle("hide", pot < 1);
-  potEl.classList.toggle("tight", pot < 3.5);
-  document.getElementById("bigbar").setAttribute("aria-label",
-    avg === null ? "No answers yet"
-      : `Score ${score.toFixed(1)} out of 10, potential ${pot.toFixed(1)}`);
-
-  [...xrayEl.children].forEach((li, i) => {
-    const v = answers[i];
-    li.classList.toggle("empty", v === null);
-    li.querySelector(".val").innerHTML = v === null ? "–"
-      : v + (v < 10 ? `<b>+${10 - v}</b>` : "");
-    li.querySelector(".bar span").style.width = v === null ? "0" : (v * 10) + "%";
-  });
-}
-
-render();
-</script>
-
-</body></html>
+</body>
+</html>

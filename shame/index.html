@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Power of Shame X-Ray</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: one narrow reading column — header, nine statements with 0–10 scales, result panel with score and per-statement x-ray bars */
+:root {
+  --bg: #f3f5f7;
+  --surface: #ffffff;
+  --ink: #1d2733;
+  --muted: #5d6b7a;
+  --line: #d9e0e7;
+  --accent: #3d5a80;
+  --accent-soft: #e2e9f2;
+  --pot-a: #f6e7c8;
+  --pot-b: #fbf2df;
+  --pot-ink: #7a5310;
+  --display: "Newsreader", Georgia, "Times New Roman", serif;
+  --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12171d; --surface: #1a2129; --ink: #e6ebf0; --muted: #94a2b1;
+    --line: #2c3743; --accent: #8fb0d9; --accent-soft: #233244;
+    --pot-a: #4a3a1c; --pot-b: #3a2f1a; --pot-ink: #f1cf8a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12171d; --surface: #1a2129; --ink: #e6ebf0; --muted: #94a2b1;
+  --line: #2c3743; --accent: #8fb0d9; --accent-soft: #233244;
+  --pot-a: #4a3a1c; --pot-b: #3a2f1a; --pot-ink: #f1cf8a; color-scheme: dark;
+}
+
+.back { color: var(--accent); text-decoration: none; font-size: 0.9rem; justify-self: start; }
+.back:hover { text-decoration: underline; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.5;
+}
+.wrap {
+  max-width: 680px;
+  margin: 0 auto;
+  padding-block: 48px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid;
+  gap: 32px;
+}
+
+header { display: grid; gap: 10px; }
+h1 {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: clamp(2rem, 6vw, 2.75rem);
+  line-height: 1.1;
+  margin: 0;
+  text-wrap: balance;
+}
+.intro { color: var(--muted); margin: 0; max-width: 60ch; }
+
+.scale-key {
+  display: flex; justify-content: space-between; gap: 16px;
+  font-size: 0.8rem; color: var(--muted);
+  letter-spacing: 0.03em; text-transform: uppercase;
+}
+
+ol.items { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.item {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px 18px 16px;
+  display: grid; gap: 12px;
+}
+.item p {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+.scale {
+  display: grid;
+  grid-template-columns: repeat(11, 1fr);
+  gap: 4px;
+  border: 0; margin: 0; padding: 0; min-width: 0;
+}
+.scale input { position: absolute; opacity: 0; pointer-events: none; }
+.scale label {
+  display: grid; place-items: center;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.scale label:hover { border-color: var(--accent); color: var(--ink); }
+.scale input:checked + label { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 600; }
+.scale input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.result {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 24px 20px;
+  display: grid; gap: 24px;
+}
+.score-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.score-label { font-size: 0.8rem; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+.progress { font-size: 0.9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Main bar: solid = current score, striped = potential (gap to 10) */
+.bigbar {
+  display: flex;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  font-variant-numeric: tabular-nums;
+}
+.bigbar .now, .bigbar .pot {
+  display: flex; align-items: center;
+  min-width: 0;
+  transition: flex-basis .3s ease;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.bigbar .now {
+  flex: 0 0 0%;
+  background: var(--accent);
+  color: var(--surface);
+  justify-content: flex-start;
+  padding-left: 14px;
+}
+.bigbar .pot {
+  flex: 1 1 auto;
+  background: repeating-linear-gradient(135deg, var(--pot-a) 0 8px, var(--pot-b) 8px 16px);
+  color: var(--pot-ink);
+  justify-content: flex-end;
+  padding-right: 14px;
+}
+.bigbar strong {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 1.6rem;
+  line-height: 1;
+}
+.bigbar .tag { font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; margin-right: 8px; opacity: .85; }
+.bigbar .now.tight .tag, .bigbar .pot.tight .tag { display: none; }
+.bigbar .now.hide, .bigbar .pot.hide { padding: 0; }
+.bigbar .now.hide > *, .bigbar .pot.hide > * { display: none; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 0.85rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend i { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+.legend .k-now { background: var(--accent); }
+.legend .k-pot { background: repeating-linear-gradient(135deg, var(--pot-a) 0 4px, var(--pot-b) 4px 8px); border: 1px solid var(--line); }
+
+.xray { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.xray li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: center;
+  font-size: 0.9rem;
+}
+.xray .name { min-width: 0; }
+.xray .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+.xray .val b { color: var(--pot-ink); font-weight: 600; margin-left: 6px; }
+.xray .bar {
+  grid-column: 1 / -1; height: 10px; border-radius: 3px; overflow: hidden;
+  background: repeating-linear-gradient(135deg, var(--pot-a) 0 4px, var(--pot-b) 4px 8px);
+}
+.xray li.empty .bar { background: var(--accent-soft); }
+.xray .bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s ease; }
+.xray li.empty .val { opacity: .5; }
+
+.actions { display: flex; justify-content: flex-end; }
+button.reset {
+  font: inherit; font-size: 0.9rem;
+  background: transparent; color: var(--accent);
+  border: 1px solid var(--line); border-radius: 6px;
+  padding: 8px 14px; cursor: pointer;
+}
+button.reset:hover { border-color: var(--accent); }
+button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (max-width: 420px) {
+  .scale { gap: 2px; }
+  .scale label { height: 34px; font-size: 0.8rem; border-radius: 4px; }
+  .item { padding: 16px 12px 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bigbar .now, .bigbar .pot, .xray .bar span, .scale label { transition: none; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="../">← All x-rays</a>
+  <header>
+    <h1>The Power of Shame</h1>
+    <p class="intro">Rate each statement from 0 to 10. 0 means the statement does not apply to you; 10 means it applies fully.</p>
+  </header>
+
+  <section aria-labelledby="q-heading">
+    <h2 id="q-heading" hidden>Statements</h2>
+    <div class="scale-key" aria-hidden="true"><span>0 · does not apply</span><span>10 · applies fully</span></div>
+    <ol class="items" id="items" style="margin-top:12px"></ol>
+  </section>
+
+  <section class="result" aria-live="polite">
+    <div class="score-row">
+      <div class="score-label">Your power of shame</div>
+      <div class="progress" id="progress">0 of 7 answered</div>
+    </div>
+    <div class="bigbar" role="img" id="bigbar" aria-label="No answers yet">
+      <div class="now" id="now"><span class="tag">Score</span><strong id="nowVal">0</strong></div>
+      <div class="pot" id="pot"><span class="tag">Potential</span><strong id="potVal">+10</strong></div>
+    </div>
+    <div class="legend">
+      <span><i class="k-now"></i>Your score</span>
+      <span><i class="k-pot"></i>Your potential: the room still open to 10</span>
+    </div>
+    <ul class="xray" id="xray"></ul>
+    <div class="actions"><button class="reset" id="reset" type="button">Start over</button></div>
+  </section>
+</main>
+
+<script>
+const STATEMENTS = [
+  { short: "Recognizing limitations",  text: "I recognize my limitations, mistakes, and weaknesses." },
+  { short: "Not superhuman",           text: "I acknowledge that I am not superhuman." },
+  { short: "Humility",                 text: "I am humble." },
+  { short: "Accepting incompleteness", text: "I accept myself in my incompleteness." },
+  { short: "Self-love",                text: "I love myself." },
+  { short: "Asking for forgiveness",   text: "I ask for forgiveness in an authentic way." },
+  { short: "Gifts for the greater good", text: "I use my gifts in the service of the greater good." }
+];
+
+const answers = new Array(STATEMENTS.length).fill(null);
+const itemsEl = document.getElementById("items");
+const xrayEl = document.getElementById("xray");
+
+STATEMENTS.forEach((s, i) => {
+  const li = document.createElement("li");
+  li.className = "item";
+  const qid = "q" + (i + 1);
+  let scale = `<fieldset class="scale" aria-labelledby="${qid}-text">`;
+  for (let v = 0; v <= 10; v++) {
+    scale += `<input type="radio" name="${qid}" id="${qid}-${v}" value="${v}"><label for="${qid}-${v}">${v}</label>`;
+  }
+  scale += `</fieldset>`;
+  li.innerHTML = `<p id="${qid}-text">${s.text}</p>${scale}`;
+  itemsEl.appendChild(li);
+
+  const x = document.createElement("li");
+  x.className = "empty";
+  x.innerHTML = `<span class="name">${s.short}</span><span class="val">–</span><span class="bar"><span></span></span>`;
+  xrayEl.appendChild(x);
+});
+
+itemsEl.addEventListener("change", e => {
+  if (e.target.type !== "radio") return;
+  const i = Number(e.target.name.slice(1)) - 1;
+  answers[i] = Number(e.target.value);
+  render();
+});
+
+document.getElementById("reset").addEventListener("click", () => {
+  answers.fill(null);
+  itemsEl.querySelectorAll("input").forEach(r => { r.checked = false; });
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+function render() {
+  const given = answers.filter(v => v !== null);
+  const avg = given.length ? given.reduce((a, b) => a + b, 0) / given.length : null;
+  const complete = given.length === STATEMENTS.length;
+
+  document.getElementById("progress").textContent =
+    complete ? "All 7 answered" : `${given.length} of 7 answered`;
+  const score = avg === null ? 0 : avg;
+  const pot = 10 - score;
+  const nowEl = document.getElementById("now");
+  const potEl = document.getElementById("pot");
+  nowEl.style.flexBasis = (score * 10) + "%";
+  document.getElementById("nowVal").textContent = avg === null ? "0" : score.toFixed(1);
+  document.getElementById("potVal").textContent = "+" + (Number.isInteger(pot) ? pot : pot.toFixed(1));
+  nowEl.classList.toggle("hide", score < 1);
+  nowEl.classList.toggle("tight", score < 3.5);
+  potEl.classList.toggle("hide", pot < 1);
+  potEl.classList.toggle("tight", pot < 3.5);
+  document.getElementById("bigbar").setAttribute("aria-label",
+    avg === null ? "No answers yet"
+      : `Score ${score.toFixed(1)} out of 10, potential ${pot.toFixed(1)}`);
+
+  [...xrayEl.children].forEach((li, i) => {
+    const v = answers[i];
+    li.classList.toggle("empty", v === null);
+    li.querySelector(".val").innerHTML = v === null ? "–"
+      : v + (v < 10 ? `<b>+${10 - v}</b>` : "");
+    li.querySelector(".bar span").style.width = v === null ? "0" : (v * 10) + "%";
+  });
+}
+
+render();
+</script>
+</body>
+</html>
